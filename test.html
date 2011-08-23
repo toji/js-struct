@@ -12,17 +12,17 @@
             
             // Define our structs
             var simpleStruct = jsStruct.create({
-                sInt: jsStruct.int32,
-                sChar: jsStruct.int8,
-                uChar: jsStruct.uint8,
-                sShort: jsStruct.int16,
+                myChar: jsStruct.int8,
+                myShort: jsStruct.int16,
+                myInt: jsStruct.int32,
+                myFloat: jsStruct.float32,
             });
             
             var complexStruct = jsStruct.create({
-                sStruct: simpleStruct,
-                sString: jsStruct.string(4),
-                sArray: jsStruct.array(jsStruct.int8, 4),
-                sStructArray: jsStruct.array(simpleStruct, 2),
+                myStruct: simpleStruct,
+                myString: jsStruct.string(4),
+                myArray: jsStruct.array(jsStruct.int8, 4),
+                myStructArray: jsStruct.array(simpleStruct, 2),
             });
             
             // readStructs accepts the following arguments:
