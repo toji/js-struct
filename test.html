@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <script src="jsStruct.js"></script>
+        
+        <script>
+            // Set up a dummy buffer
+            var buffer = new ArrayBuffer(128);
+            var byteBuffer = new Int8Array(buffer);
+            for(var i = 0; i < byteBuffer.length; ++i) {
+                byteBuffer[i] = i;
+            }
+            
+            // Define our structs
+            var simpleStruct = jsStruct.create({
+                sInt: jsStruct.int32,
+                sChar: jsStruct.int8,
+                uChar: jsStruct.uint8,
+                sShort: jsStruct.int16,
+            });
+            
+            var complexStruct = jsStruct.create({
+                sStruct: simpleStruct,
+                sString: jsStruct.string(4),
+                sArray: jsStruct.array(jsStruct.int8, 4),
+                sStructArray: jsStruct.array(simpleStruct, 2),
+            });
+            
+            // readStructs accepts the following arguments:
+            //  arrayBuffer - the ArrayBuffer to read from
+            //  offset - the byte offset into the buffer where reading should start
+            //  count - the number of structs to read. Structs are assumed to be tightly packed
+            // returns an array of structs
+            var a = simpleStruct.readStructs(buffer, 0, 2);
+            var b = complexStruct.readStructs(buffer, 32, 1);
+            
+            console.log(a);
+            console.log(b);
+        </script>
+    </head>
+    <body>
+        <p>Open the browser console to see the results of this test</p>
+    </body>
+</html>
