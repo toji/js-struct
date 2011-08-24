@@ -1,6 +1,6 @@
 <html>
     <head>
-        <script src="jsStruct.js"></script>
+        <script src="js-struct.js"></script>
         
         <script>
             // Set up a dummy buffer
@@ -10,31 +10,41 @@
                 byteBuffer[i] = i;
             }
             
-            // Define our structs
-            var simpleStruct = jsStruct.create({
-                myChar: jsStruct.int8,
-                myShort: jsStruct.int16,
-                myInt: jsStruct.int32,
-                myFloat: jsStruct.float32,
-            });
+            // Define the struct layout
+            var SimpleStruct = Struct.create(
+                Struct.int8("myChar"),
+                Struct.int16("myShort"),
+                Struct.int32("myInt"),
+                Struct.float32("myFloat")
+            );
             
-            var complexStruct = jsStruct.create({
-                myStruct: simpleStruct,
-                myString: jsStruct.string(4),
-                myArray: jsStruct.array(jsStruct.int8, 4),
-                myStructArray: jsStruct.array(simpleStruct, 2),
-            });
+            var ComplexStruct = Struct.create(
+                Struct.struct("myStruct", SimpleStruct), // Structs can be nested
+                Struct.string("myString", 4),
+                Struct.array("myArray", Struct.int8(), 4), // Primitives or other structs can be read as fixed-length arrays
+                Struct.array("myStructArray", SimpleStruct, 2),
+                { 
+                    // The last argument passed to Struct.create can be additional properties for the object
+                    // These properties will be available on every instance of this struct that is created
+                    myFunction: {
+                        value: function() {
+                            console.log("myFunction has been called");
+                        }
+                    }
+                }
+            );
             
             // readStructs accepts the following arguments:
             //  arrayBuffer - the ArrayBuffer to read from
             //  offset - the byte offset into the buffer where reading should start
             //  count - the number of structs to read. Structs are assumed to be tightly packed
             // returns an array of structs
-            var a = simpleStruct.readStructs(buffer, 0, 2);
-            var b = complexStruct.readStructs(buffer, 32, 1);
+            var a = SimpleStruct.readStructs(buffer, 0, 2);
+            var b = ComplexStruct.readStructs(buffer, 32, 1);
             
             console.log(a);
             console.log(b);
+            b[0].myFunction();
         </script>
     </head>
     <body>

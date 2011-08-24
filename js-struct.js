@@ -1,5 +1,5 @@
 /* 
- * jsStruct.js - Utility to assist in parsing c-style structs from an ArrayBuffer
+ * js-struct.js - Utility to assist in parsing c-style structs from an ArrayBuffer
  */
 
 /*
@@ -33,24 +33,95 @@ var nextStructId = 0;
 /**
 * 
 */
-var jsStruct = Object.create(Object, {
-    // Parseable Primitves
-    int8:    { value: { readCode: "v.getInt8(o, true);", byteLength: 1, defaultValue: 0 } },
-    uint8:   { value: { readCode: "v.getUint8(o, true);", byteLength: 1, defaultValue: 0 } },
-    int16:   { value: { readCode: "v.getInt16(o, true);", byteLength: 2, defaultValue: 0 } },
-    uint16:  { value: { readCode: "v.getUint16(o, true);", byteLength: 2, defaultValue: 0 } },
-    int32:   { value: { readCode: "v.getInt32(o, true);", byteLength: 4, defaultValue: 0 } },
-    uint32:  { value: { readCode: "v.getUint32(o, true);", byteLength: 4, defaultValue: 0 } },
-    float32: { value: { readCode: "v.getFloat32(o, true);", byteLength: 4, defaultValue: 0 } },
-    float64: { value: { readCode: "v.getFloat64(o, true);", byteLength: 8, defaultValue: 0 } },
+var Struct = Object.create(Object, {
+    /**
+    * Defines a single byte integer value (byte/char). 
+    * @param name Property name
+    */
+    int8: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getInt8(o, true);", byteLength: 1, defaultValue: 0, structProperty: true }; 
+        }
+    },
+    
+    /**
+    * Defines an unsigned single byte integer value (ubyte/uchar). 
+    * @param name Property name
+    */
+    uint8: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getUint8(o, true);", byteLength: 1, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines a two byte integer value (short). 
+    * @param name Property name
+    */
+    int16: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getInt16(o, true);", byteLength: 2, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines an unsigned two byte integer value (ushort). 
+    * @param name Property name
+    */
+    uint16: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getUint16(o, true);", byteLength: 2, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines a four byte integer value (int/long). 
+    * @param name Property name
+    */
+    int32: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getInt32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines an unsigned four byte integer value (uint/ulong). 
+    * @param name Property name
+    */
+    uint32: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getUint32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines a four byte floating point value (float). 
+    * @param name Property name
+    */
+    float32: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getFloat32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+        }
+    },
+    
+    /**
+    * Defines an eight byte floating point value (double). 
+    * @param name Property name
+    */
+    float64: { 
+        value: function(name) { 
+            return { name: name, readCode: "v.getFloat64(o, true);", byteLength: 8, defaultValue: 0, structProperty: true };
+        }
+    },
     
     /**
     * Defines a fixed-length ASCII string. 
     * Will always read the number of characters specified, but the returned string will truncate at the first null char.
+    * @param name Property name
     * @param length Number of characters to read
     */
     string: {
-        value: function(length) {
+        value: function(name, length) {
             var code = "(function() {\n";
             code += "   var str = \"\";\n";
             code += "   for(var j = 0; j < " + length + "; ++j) {\n";
@@ -60,21 +131,24 @@ var jsStruct = Object.create(Object, {
             code += "   }\n";
             code += "   return str;\n"
             code += "})();\n";
-            return { 
+            return {
+                name: name,
                 readCode: code, 
                 byteLength: length, 
-                defaultValue: "" 
+                defaultValue: "",
+                structProperty: true
             };
         }
     },
     
     /**
     * Defines a fixed-length array of structs or primitives
+    * @param name Property name
     * @param type struct or primitive type to read
     * @param length Number of elements to read. Total bytes read will be type.byteLength * length
     */
     array: {
-        value: function(type, length) {
+        value: function(name, type, length) {
             var code = "(function() {\n";
             code += "   var aa = new Array(" + length + "), av;\n";
             code += "   for(var j = 0; j < " + length + "; ++j) {\n";
@@ -84,28 +158,46 @@ var jsStruct = Object.create(Object, {
             code += "   }\n";
             code += "   return aa;\n"
             code += "})();\n";
-            return { 
+            return {
+                name: name,
                 readCode: code, 
                 byteLength: type.byteLength * length, 
                 defaultValue: null,
-                array: true
+                array: true,
+                structProperty: true
             };
         }
     },
     
     /**
-    * Defines a section of the binary data that is to be skipped over.
-    * It's a bit of a pain, but you'll still need to give skipped bytes a key in your struct,
-    * and you must have a unique key for each skipped section. 
-    * Skipped keys will always be set to null.
+    * Defines a nested struct
+    * @param name Property name
+    * @param struct Struct to read
+    */
+    struct: {
+        value: function(name, struct) {
+            return {
+                name: name,
+                readCode: struct.readCode, 
+                byteLength: struct.byteLength, 
+                defaultValue: null,
+                struct: true,
+                structProperty: true
+            };
+        }
+    },
+    
+    /**
+    * Defines a number of the bytes to be skipped over.
     * @param length Number of bytes to be skipped
     */
     skip: {
         value: function(length) {
-            return { 
+            return {
+                name: null,
                 readCode: "null;\n", 
-                byteLength: length, 
-                defaultValue: null 
+                byteLength: length,
+                structProperty: true
             };
         }
     },
@@ -117,25 +209,29 @@ var jsStruct = Object.create(Object, {
     * @returns An object containing a "readStructs" function that can read an array of the defined type from an ArrayBuffer
     */
     create: {
-        value: function(structDef, prototype) {
-            var key, type;
+        value: function(/* collected via arguments */) {
+            var type;
+            var properties = arguments[arguments.length-1].structProperty ? {} : arguments[arguments.length-1];
             
             var byteLength = 0;
-            var struct = Object.create(Object.prototype, prototype);
+            var struct = Object.create(Object.prototype, properties);
             
             // This new struct will be assigned a unique name so that instances can be easily constructed later.
             // It is not recommended that you use these names for anything outside this class, as they are not
             // intended to be stable from run to run.
-            Object.defineProperty(struct, "jsStructId", { value: "jsStructId_" + nextStructId, enumerable: true, configurable: false, writeable: false });
-            Object.defineProperty(this, struct.jsStructId, { value: struct, enumerable: true, configurable: false, writeable: false });
+            Object.defineProperty(struct, "struct_type_id", { value: "struct_id_" + nextStructId, enumerable: false, configurable: false, writeable: false });
+            Object.defineProperty(this, struct.struct_type_id, { value: struct, enumerable: false, configurable: false, writeable: false });
             nextStructId += 1;
             
             // Build the code to read a single struct, calculate byte lengths, and define struct properties
-            var readCode = "(function() { var st = Object.create(jsStruct." + struct.jsStructId + ");\n";
-            for(key in structDef) {
-                type = structDef[key];
-                Object.defineProperty(struct, key, { value: type.defaultValue, enumerable: true, configurable: true, writeable: true });
-                readCode += "st." + key + " = " + type.readCode + "\n";
+            var readCode = "(function() { var st = Object.create(Struct." + struct.struct_type_id + ");\n";
+            for(var i = 0; i < arguments.length; ++i) {
+                type = arguments[i];
+                if(!type.structProperty) { continue; }
+                if(type.name) {
+                    Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writeable: true });
+                    readCode += "st." + type.name + " = " + type.readCode + "\n";
+                }
                 if(!type.array && !type.struct) {
                     readCode += "o += " + type.byteLength + ";\n";
                 }
@@ -156,8 +252,6 @@ var jsStruct = Object.create(Object, {
             
             Object.defineProperty(struct, "byteLength", { value: byteLength, enumerable: true, configurable: true, writeable: true });
             Object.defineProperty(struct, "readCode", { value: readCode, enumerable: true, configurable: true, writeable: true });
-            Object.defineProperty(struct, "defaultValue", { value: null, enumerable: true, configurable: true, writeable: true });
-            Object.defineProperty(struct, "struct", { value: true, enumerable: true, configurable: true, writeable: true });
             
             var parseFunc = new Function("arrayBuffer", "offset", "count", "callback", parseScript);
             Object.defineProperty(struct, "readStructs", { value: parseFunc, configurable: true, writeable: true });

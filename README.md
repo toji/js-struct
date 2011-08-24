@@ -14,19 +14,28 @@ Sample
     var buffer = new ArrayBuffer(128); // Assume the buffer is populated with sensible binary data
     
     // Define the struct layout
-    var simpleStruct = jsStruct.create({
-        myChar: jsStruct.int8,
-        myShort: jsStruct.int16,
-        myInt: jsStruct.int32,
-        myFloat: jsStruct.float32,
-    });
+    var SimpleStruct = Struct.create(
+        Struct.int8("myChar"),
+        Struct.int16("myShort"),
+        Struct.int32("myInt"),
+        Struct.float32("myFloat")
+    );
     
-    var complexStruct = jsStruct.create({
-        myStruct: simpleStruct, // Structs can be nested
-        myString: jsStruct.string(4), // ASCII only for the time being
-        myArray: jsStruct.array(jsStruct.int8, 4),
-        myStructArray: jsStruct.array(simpleStruct, 2), // Structs can also be read as nested arrays
-    });
+    var ComplexStruct = Struct.create(
+        Struct.struct("myStruct", SimpleStruct), // Structs can be nested
+        Struct.string("myString", 4),
+        Struct.array("myArray", Struct.int8(), 4), // Primitives or other structs can be read as fixed-length arrays
+        Struct.array("myStructArray", SimpleStruct, 2),
+        { 
+            // The last argument passed to Struct.create can be additional properties for the object
+            // These properties will be available on every instance of this struct that is created
+            myFunction: {
+                value: function() {
+                    console.log("myFunction has been called");
+                }
+            }
+        }
+    );
     
     // readStructs accepts the following arguments:
     //  arrayBuffer - the ArrayBuffer to read from
@@ -35,3 +44,6 @@ Sample
     // returns an array of structs
     var a = simpleStruct.readStructs(buffer, 0, 2); // Returns an array of 2 simpleStructs
     var b = complexStruct.readStructs(buffer, 32, 1); // Returns an array of 1 complexStruct
+    
+    // myFunction will be available on every instance of a ComplexStruct
+    b[0].myFunction();
