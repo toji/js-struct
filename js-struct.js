@@ -242,10 +242,11 @@ var Struct = Object.create(Object, {
             // Build the code to read an array of this struct type
             var parseScript = "var a = new Array(count);\n var s;\n";
             parseScript += "var v = new DataView(arrayBuffer, offset);\n"; // TODO: I should be able to specify a length here (count * this.byteLength), but it consistently gives me an INDEX_SIZE_ERR. Wonder why?
-            parseScript += "var o = 0;\n";
+            parseScript += "var o = 0, so = 0;\n";
             parseScript += "for(var i = 0; i < count; ++i) {\n";
+            parseScript += "    so = o;\n";
             parseScript += "    s = " + readCode + "\n";
-            parseScript += "    if(callback) { callback(s); }\n";
+            parseScript += "    if(callback) { callback(s, offset+so); }\n";
             parseScript += "    a[i] = s;\n";
             parseScript += "}\n";
             parseScript += "return a;\n";

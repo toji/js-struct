@@ -47,3 +47,9 @@ Sample
     
     // myFunction will be available on every instance of a ComplexStruct
     b[0].myFunction();
+    
+    // readStructs can also accept a callback, which will be called with the parsed structure and offset of that 
+    // structure within the stream as they are parsed.
+    SimpleStruct.readStructs(buffer, 0, 2, function(newStruct, offset) {
+        console.log("Parsed " + newStruct + " at offset " + offset);
+    });
