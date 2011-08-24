@@ -42,8 +42,8 @@ Sample
     //  offset - the byte offset into the buffer where reading should start
     //  count - the number of structs to read. Structs are assumed to be tightly packed
     // returns an array of structs
-    var a = simpleStruct.readStructs(buffer, 0, 2); // Returns an array of 2 simpleStructs
-    var b = complexStruct.readStructs(buffer, 32, 1); // Returns an array of 1 complexStruct
+    var a = SimpleStruct.readStructs(buffer, 0, 2); // Returns an array of 2 simpleStructs
+    var b = ComplexStruct.readStructs(buffer, 32, 1); // Returns an array of 1 complexStruct
     
     // myFunction will be available on every instance of a ComplexStruct
     b[0].myFunction();
