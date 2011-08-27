@@ -5,7 +5,7 @@ Typed Arrays have made parsing binary files much more reasonable in Javascript, 
 of c-style struct reading, where you can simply point a struct at a memory offset and read it. This utility
 attempts to provide the same convenience in Javascript, in a reasonably efficient manner.
 
-Better documentation should be forthcoming. Library is currently supports reading only, will probably add write in the future.
+Better documentation should be forthcoming. Library currently supports reading only, will probably add write in the future.
 
 Sample
 -------------
