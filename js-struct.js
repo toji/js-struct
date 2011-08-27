@@ -122,7 +122,7 @@ var Struct = Object.create(Object, {
     */
     string: {
         value: function(name, length) {
-            var code = "(function() {\n";
+            var code = "(function(o) {\n";
             code += "   var str = \"\";\n";
             code += "   for(var j = 0; j < " + length + "; ++j) {\n";
             code += "       var char = v.getUint8(o+j, true);\n";
@@ -130,7 +130,7 @@ var Struct = Object.create(Object, {
             code += "       str += String.fromCharCode(char);\n";
             code += "   }\n";
             code += "   return str;\n"
-            code += "})();\n";
+            code += "})(o);\n";
             return {
                 name: name,
                 readCode: code, 
@@ -149,15 +149,15 @@ var Struct = Object.create(Object, {
     */
     array: {
         value: function(name, type, length) {
-            var code = "(function() {\n";
+            var code = "(function(o) {\n";
             code += "   var aa = new Array(" + length + "), av;\n";
             code += "   for(var j = 0; j < " + length + "; ++j) {\n";
-            code += "   av = " + type.readCode + "\n";
+            code += "       av = " + type.readCode + "\n";
             code += "       o += " + type.byteLength + ";\n";
             code += "       aa[j] = av;\n";
             code += "   }\n";
             code += "   return aa;\n"
-            code += "})();\n";
+            code += "})(o);\n";
             return {
                 name: name,
                 readCode: code, 
@@ -224,7 +224,7 @@ var Struct = Object.create(Object, {
             nextStructId += 1;
             
             // Build the code to read a single struct, calculate byte lengths, and define struct properties
-            var readCode = "(function() { var st = Object.create(Struct." + struct.struct_type_id + ");\n";
+            var readCode = "(function(o) { var st = Object.create(Struct." + struct.struct_type_id + ");\n";
             for(var i = 0; i < arguments.length; ++i) {
                 type = arguments[i];
                 if(!type.structProperty) { continue; }
@@ -232,12 +232,10 @@ var Struct = Object.create(Object, {
                     Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writeable: true });
                     readCode += "st." + type.name + " = " + type.readCode + "\n";
                 }
-                if(!type.array && !type.struct) {
-                    readCode += "o += " + type.byteLength + ";\n";
-                }
+                readCode += "o += " + type.byteLength + ";\n";
                 byteLength += type.byteLength;
             }
-            readCode += "return st; })();";
+            readCode += "return st; })(o);";
             
             // Build the code to read an array of this struct type
             var parseScript = "var a = new Array(count);\n var s;\n";
@@ -246,6 +244,7 @@ var Struct = Object.create(Object, {
             parseScript += "for(var i = 0; i < count; ++i) {\n";
             parseScript += "    so = o;\n";
             parseScript += "    s = " + readCode + "\n";
+            parseScript += "    o += this.byteLength;\n";
             parseScript += "    if(callback) { callback(s, offset+so); }\n";
             parseScript += "    a[i] = s;\n";
             parseScript += "}\n";
