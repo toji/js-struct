@@ -216,8 +216,8 @@ var Struct = Object.create(Object, {
             // This new struct will be assigned a unique name so that instances can be easily constructed later.
             // It is not recommended that you use these names for anything outside this class, as they are not
             // intended to be stable from run to run.
-            Object.defineProperty(struct, "struct_type_id", { value: "struct_id_" + nextStructId, enumerable: false, configurable: false, writeable: false });
-            Object.defineProperty(this, struct.struct_type_id, { value: struct, enumerable: false, configurable: false, writeable: false });
+            Object.defineProperty(struct, "struct_type_id", { value: "struct_id_" + nextStructId, enumerable: false, configurable: false, writable: false });
+            Object.defineProperty(this, struct.struct_type_id, { value: struct, enumerable: false, configurable: false, writable: false });
             nextStructId += 1;
             
             // Build the code to read a single struct, calculate byte lengths, and define struct properties
@@ -226,7 +226,7 @@ var Struct = Object.create(Object, {
                 type = arguments[i];
                 if(!type.structProperty) { continue; }
                 if(type.name) {
-                    Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writeable: true });
+                    Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writable: true });
                     readCode += "st." + type.name + " = " + type.readCode + "\n";
                 }
                 readCode += "o += " + type.byteLength + ";\n";
@@ -247,11 +247,11 @@ var Struct = Object.create(Object, {
             parseScript += "}\n";
             parseScript += "return a;\n";
             
-            Object.defineProperty(struct, "byteLength", { value: byteLength, enumerable: true, configurable: true, writeable: true });
-            Object.defineProperty(struct, "readCode", { value: readCode, enumerable: true, configurable: true, writeable: true });
+            Object.defineProperty(struct, "byteLength", { value: byteLength, enumerable: true, configurable: true, writable: true });
+            Object.defineProperty(struct, "readCode", { value: readCode, enumerable: true, configurable: true, writable: true });
             
             var parseFunc = new Function("arrayBuffer", "offset", "count", "callback", parseScript);
-            Object.defineProperty(struct, "readStructs", { value: parseFunc, configurable: true, writeable: true });
+            Object.defineProperty(struct, "readStructs", { value: parseFunc, configurable: true, writable: true });
             
             return struct;
         }
